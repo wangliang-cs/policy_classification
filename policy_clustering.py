@@ -20,7 +20,7 @@ def _assign_single_policy(policy_text: str, standard_policy_embed_dir) -> str:
         pass
 
 
-def policy_assignment_monthly(input_policy_list: list, standard_policy_list: list) -> list:
+def policy_standardize_monthly(input_policy_list: list, standard_policy_list: list) -> list:
     """
     输入待标准化的政策列表input_policy_list，形如：
     [
