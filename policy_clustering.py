@@ -171,3 +171,4 @@ if __name__ == "__main__":
             futures = [executor.submit(_process_month_chunk, chunk) for chunk in chunks]
             for _ in as_completed(futures):
                 pass
+    print(f"All done. {len(month_list)} months processed.")
