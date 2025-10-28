@@ -2,12 +2,33 @@ from llm.llm_embed import EmbedPolicy
 import numpy as np
 import json
 import os
-from tqdm import tqdm
-
-ep_model = EmbedPolicy()
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 
-def _assign_single_policy(policy_text: str, standard_policy_embed_dir):
+def _json_safe(obj):
+    import numpy as np
+    if isinstance(obj, dict):
+        return { _json_safe(k): _json_safe(v) for k, v in obj.items() }
+    if isinstance(obj, list):
+        return [ _json_safe(x) for x in obj ]
+    if isinstance(obj, tuple):
+        return tuple(_json_safe(x) for x in obj)
+    if isinstance(obj, set):
+        return [ _json_safe(x) for x in obj ]
+    if isinstance(obj, (np.bool_,)):
+        return bool(obj)
+    if isinstance(obj, (np.integer,)):
+        return int(obj)
+    if isinstance(obj, (np.floating,)):
+        return float(obj)
+    if isinstance(obj, np.ndarray):
+        return _json_safe(obj.tolist())
+    return obj
+
+
+
+
+def _assign_single_policy(policy_text: str, standard_policy_embed_dir, ep_model):
     """
     policy_text为待标准化的政策文本
 
@@ -40,7 +61,7 @@ def _assign_single_policy(policy_text: str, standard_policy_embed_dir):
         median = float(np.median(all_dists))
         distinct_top = (second_min - min_dist) / (std + 1e-8)
         relative_to_median = min_dist / (median + 1e-8)
-        if (distinct_top < 0.5) and (relative_to_median > 0.9):
+        if (distinct_top < 0.7) and (relative_to_median > 0.3):
             no_match = 1
         else:
             no_match = 0
@@ -48,7 +69,7 @@ def _assign_single_policy(policy_text: str, standard_policy_embed_dir):
     return best_name, no_match
 
 
-def policy_standardize_monthly(input_policy_list: list, standard_policy_list: list):
+def policy_standardize_monthly(input_policy_list: list, standard_policy_list: list, ep_model):
     """
     输入待标准化的政策列表input_policy_list，形如：
     [
@@ -81,31 +102,17 @@ def policy_standardize_monthly(input_policy_list: list, standard_policy_list: li
         input_policy_name = list(input_policy.keys())[0]
         input_policy_text = list(input_policy.values())[0]
         input_policy_text = f"{input_policy_name} {input_policy_text}"
-        std_policy_name, no_match = _assign_single_policy(input_policy_text, standard_policy_embed_dir)
+        std_policy_name, no_match = _assign_single_policy(input_policy_text, standard_policy_embed_dir, ep_model)
         ret_list.append(std_policy_name)
         no_match_list.append(no_match)
 
     return ret_list, no_match_list
 
-if __name__ == "__main__":
-    # 枚举 ../policy_classification_data/policy_std/ 目录下所有出现过的年_月字符串
-    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "policy_classification_data", "policy_std"))
-    month_set = set()
-    for name in os.listdir(base_dir):
-        # 从文件或目录名中提取形如 YYYY_MM 的片段
-        m = name.split("_")[0]
-        if m:
-            month_str = m
-            output_path = os.path.join(base_dir, f"{month_str}_output.json")
-            input_path = os.path.join(base_dir, f"{month_str}_input.json")
-            events_path = os.path.join(base_dir, f"{month_str}_events.json")            
-            if not os.path.exists(output_path) and os.path.exists(input_path) and os.path.exists(events_path):
-                month_set.add(month_str)
-    month_list = sorted(month_set)
-    print(month_list)
-
-
-    for month_str in tqdm(month_list):
+# 线程工作函数：每个线程内部创建独立 EmbedPolicy 实例并处理一个批次
+def _process_month_chunk(months):
+    # 每进程仅初始化一次模型
+    local_ep = EmbedPolicy()
+    for month_str in months:
         input_policy_list = []
         input_policy_records = []
         with open(f"../policy_classification_data/policy_std/{month_str}_input.json", "r", encoding="utf-8") as fd:
@@ -126,9 +133,9 @@ if __name__ == "__main__":
                 for item in data[type]:
                     standard_policy_list.append(item)
                     standard_policy_type[item] = type
-        ret_list, no_match_list = policy_standardize_monthly(input_policy_list, standard_policy_list)
-        print(month_str)
-        print(ret_list)
+        ret_list, no_match_list = policy_standardize_monthly(input_policy_list, standard_policy_list, local_ep)
+        # print(month_str)
+        # print(ret_list)
         with open(f"../policy_classification_data/policy_std/{month_str}_output.json", "w", encoding="utf-8") as fd:
             for idx, std_policy_name in enumerate(ret_list):
                 input_policy_records[idx]['std_event'] = std_policy_name
@@ -136,26 +143,31 @@ if __name__ == "__main__":
                 input_policy_records[idx]['no_match'] = no_match_list[idx]
                 if no_match_list[idx] > 0:
                     print(input_policy_records[idx])
-                fd.write(json.dumps(input_policy_records[idx], ensure_ascii=False) + "\n")
+                fd.write(json.dumps(_json_safe(input_policy_records[idx]), ensure_ascii=False) + "\n")
 
-
-
-            
-    # input_policy_list = [
-    #     {"欧盟GPS/Galileo开放信号政策": "欧盟宣布民用Galileo信号免费并鼓励多星座接收，提升民用定位精度；osmdroid后续版本增加对GnssStatus.Callback等多星座接口的封装，使离线定位更准确。"},
-    #     {"欧盟GDPR生效": "开发者需对地图数据收集做合规审计，部分企业因担心聚合插件可能缓存用户坐标而弃用第三方扩展，Issues中出现银行与医疗客户移除该库的反馈"},
-    #     {"中国工信部 164 号文 IPv6 改造": "要求新上架 App 必须支持 IPv6-Only 网络。YTKNetwork 2.6.0 默认启用 NSURLSession 的 IPv6 解析，并给出“IPv6 失败-降级-IPv4”示例配置，帮助开发者快速过检。"},
-    #     {"Google UMP + GDPR 合规框架": "Google要求2021Q2起所有欧洲流量必须使用IAB TCF 2.0合规的UMP表单；AdColony SDK 4.6迅速内置Google UMP适配器并开源TCF String解析，帮助开发者一次集成即可同时满足AdColony+AdMob的GDPR合规，提高SDK采用率。..."},
-    #     {"欧盟GDPR对开源项目合规成本提升": "GDPR要求开源库若收集IP、邮箱需披露数据流向；DKChainableAnimationKit Demo内置Firebase埋点统计崩溃，被欧洲开发者质疑合规，主导者最终移除统计代码并发布无追踪版本，增加维护负担。"...},
-    #     {"工信部《推动5G+工业互联网512工程通知》": "明确鼓励5G+工业互联网场景采用国产实时通信中间件。腾讯云 subsequent to 5G QoS接口、工厂局域网穿透模块开源，获得江苏、广东多家工业SaaS订单。"},
-    #     {"工信部要求 App 备案并规范权限调用": "备案制推动国内 App 瘦身、减少三方 SDK；ZoomImage 零网络权限、零依赖，契合合规诉求，成为对安全敏感厂商的首选。"},
-    #     {"宽带中国战略及IPv6升级": "工信部要求新建智能终端默认支持IPv6，node-android在0.4.0版本立即加入IPv6-UDP打洞，使其在政府智慧路灯、抄表项目中中标。"},
-        
-    # ]
-    # standard_policy_list = [
-    #     {"欧盟GDPR政策": "GDPR要求开源库若收集IP、邮箱、位置等需披露数据流向"},
-    #     {"Galileo开放信号": "Galileo开放民用卫星信号"},
-    #     {"工信部《推动5G+工业互联网512工程通知》": "5G+工业互联网512工程通知要求5G基站支持10000个并发用户。"},
-    #     {"工信部 164 号文 IPv6 改造": "要求新上架 App 必须支持 IPv6 网络"},
-    #     {"工信部要求 App 备案并规范权限调用": "要求移动APP必须备案"}
-    # ]
+if __name__ == "__main__":
+    # 枚举 ../policy_classification_data/policy_std/ 目录下所有出现过的年_月字符串
+    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "policy_classification_data", "policy_std"))
+    month_set = set()
+    for name in os.listdir(base_dir):
+        # 从文件或目录名中提取形如 YYYY_MM 的片段
+        m = name.split("_")[0]
+        if m:
+            month_str = m
+            output_path = os.path.join(base_dir, f"{month_str}_output.json")
+            input_path = os.path.join(base_dir, f"{month_str}_input.json")
+            events_path = os.path.join(base_dir, f"{month_str}_events.json")            
+            if not os.path.exists(output_path) and os.path.exists(input_path) and os.path.exists(events_path):
+                month_set.add(month_str)
+    month_list = sorted(month_set)
+    print(month_list)
+    # 按批次并行：20进程，每进程处理一段月份，且进程内仅初始化一次模型
+    max_workers = 20
+    n = len(month_list)
+    if n > 0:
+        chunk_size = max(1, (n + max_workers - 1) // max_workers)
+        chunks = [month_list[i:i+chunk_size] for i in range(0, n, chunk_size)]
+        with ProcessPoolExecutor(max_workers=max_workers) as executor:
+            futures = [executor.submit(_process_month_chunk, chunk) for chunk in chunks]
+            for _ in as_completed(futures):
+                pass

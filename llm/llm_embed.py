@@ -93,4 +93,9 @@ class EmbedPolicy:
         return best_gpu
 
     def embed_text(self, text: str) -> list:
-        return self.encoder.mean_pooling(self.encoder.encode(text))
+        try:
+            return self.encoder.mean_pooling(self.encoder.encode(text))
+        except Exception as e:
+            print(f"embed_text error: {e}: {text}")
+        finally:
+            return [0 for _ in range(self.encoder.get_dimension())]
