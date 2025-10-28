@@ -84,9 +84,10 @@ if __name__ == "__main__":
     month_list = sorted(month_set)
     print(month_list)
 
-    input_policy_list = []
-    input_policy_records = []
+
     for month_str in tqdm(month_list):
+        input_policy_list = []
+        input_policy_records = []
         with open(f"../policy_classification_data/policy_std/{month_str}_input.json", "r", encoding="utf-8") as fd:
             for line in fd:
                 line = line.strip()
