@@ -11,7 +11,7 @@ def __get_config(field_name, file_path):
 
 
 def get_config(field_name):
-    yaml_paths = [f"../policy_classification/config.yaml"]
+    yaml_paths = [f"../policy_classification_data/config.yaml"]
     for file_path in yaml_paths:
         try:
             return __get_config(field_name, file_path)
