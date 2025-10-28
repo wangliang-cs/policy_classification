@@ -76,7 +76,8 @@ if __name__ == "__main__":
                 if line:
                     input_policy = json.loads(line)
                     input_policy_records.append(input_policy)
-                    input_policy_list.append({input_policy['event']: input_policy['policy_content']['政策内容和影响']})
+                    # input_policy_list.append({input_policy['event']: input_policy['policy_content']['政策内容和影响']})
+                    input_policy_list.append({input_policy['event']: ""})
         standard_policy_list = []
         standard_policy_type = {}
         with open(f"../policy_classification_data/policy_std/{month_str}_events.json", "r", encoding="utf-8") as fd:
