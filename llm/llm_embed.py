@@ -97,5 +97,4 @@ class EmbedPolicy:
             return self.encoder.mean_pooling(self.encoder.encode(text))
         except Exception as e:
             print(f"embed_text error: {e}: {text}")
-        finally:
             return [0 for _ in range(self.encoder.get_dimension())]
