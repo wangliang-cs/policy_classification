@@ -22,12 +22,27 @@ def _assign_single_policy(policy_text: str, standard_policy_embed_dir) -> str:
     # 使用欧式距离（L2范数）寻找最近的标准化政策
     min_dist = float('inf')
     best_name = None
+    dists_list = []
     for policy_name, std_emb in standard_policy_embed_dir.items():
         dist = np.linalg.norm(np.array(p_emb) - np.array(std_emb))
+        dists_list.append((policy_name, dist))
         if dist < min_dist:
             min_dist = dist
             best_name = policy_name
-    return best_name
+    # 根据距离分布判断是否疑似都不匹配
+    if len(dists_list) == 0:
+        no_match = True
+    else:
+        all_dists = np.array([d for _, d in dists_list])
+        sorted_dists = np.sort(all_dists)
+        second_min = sorted_dists[1] if len(sorted_dists) > 1 else sorted_dists[0]
+        std = all_dists.std()
+        median = float(np.median(all_dists))
+        distinct_top = (second_min - min_dist) / (std + 1e-8)
+        relative_to_median = min_dist / (median + 1e-8)
+        no_match = (distinct_top < 0.5) and (relative_to_median > 0.9)
+    # 可根据 no_match 进一步处理（当前仅计算）
+    return best_name, no_match
 
 
 def policy_standardize_monthly(input_policy_list: list, standard_policy_list: list) -> list:
@@ -58,14 +73,16 @@ def policy_standardize_monthly(input_policy_list: list, standard_policy_list: li
         standard_policy_embed_dir[std_policy_name] = std_policy_emb
 
     ret_list = []
+    no_match_list = []
     for input_policy in input_policy_list:
         input_policy_name = list(input_policy.keys())[0]
         input_policy_text = list(input_policy.values())[0]
         input_policy_text = f"{input_policy_name} {input_policy_text}"
-        std_policy_name = _assign_single_policy(input_policy_text, standard_policy_embed_dir)
+        std_policy_name, no_match = _assign_single_policy(input_policy_text, standard_policy_embed_dir)
         ret_list.append(std_policy_name)
+        no_match_list.append(no_match)
 
-    return ret_list
+    return ret_list, no_match_list
 
 if __name__ == "__main__":
     # 枚举 ../policy_classification_data/policy_std/ 目录下所有出现过的年_月字符串
@@ -106,12 +123,16 @@ if __name__ == "__main__":
                 for item in data[type]:
                     standard_policy_list.append(item)
                     standard_policy_type[item] = type
-        ret_list = policy_standardize_monthly(input_policy_list, standard_policy_list)
+        ret_list, no_match_list = policy_standardize_monthly(input_policy_list, standard_policy_list)
+        print(month_str)
         print(ret_list)
         with open(f"../policy_classification_data/policy_std/{month_str}_output.json", "w", encoding="utf-8") as fd:
             for idx, std_policy_name in enumerate(ret_list):
                 input_policy_records[idx]['std_event'] = std_policy_name
                 input_policy_records[idx]['std_event_type'] = standard_policy_type[std_policy_name]
+                input_policy_records[idx]['no_match'] = no_match_list[idx]
+                if no_match_list[idx]:
+                    print(input_policy_records[idx])
                 fd.write(json.dumps(input_policy_records[idx], ensure_ascii=False) + "\n")
 
 
