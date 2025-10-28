@@ -6,8 +6,29 @@ from tqdm import tqdm
 
 ep_model = EmbedPolicy()
 
+# 将可能包含的 NumPy 类型递归转换为原生 Python 类型，避免 JSON 序列化报错
+def _json_safe(obj):
+    import numpy as _np
+    if isinstance(obj, dict):
+        return {k: _json_safe(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_json_safe(v) for v in obj]
+    if isinstance(obj, tuple):
+        return tuple(_json_safe(v) for v in obj)
+    if isinstance(obj, set):
+        return [_json_safe(v) for v in obj]
+    if isinstance(obj, _np.bool_):
+        return bool(obj)
+    if isinstance(obj, _np.integer):
+        return int(obj)
+    if isinstance(obj, _np.floating):
+        return float(obj)
+    if isinstance(obj, _np.ndarray):
+        return obj.tolist()
+    return obj
 
-def _assign_single_policy(policy_text: str, standard_policy_embed_dir) -> str:
+
+def _assign_single_policy(policy_text: str, standard_policy_embed_dir):
     """
     policy_text为待标准化的政策文本
 
@@ -45,7 +66,7 @@ def _assign_single_policy(policy_text: str, standard_policy_embed_dir) -> str:
     return best_name, no_match
 
 
-def policy_standardize_monthly(input_policy_list: list, standard_policy_list: list) -> list:
+def policy_standardize_monthly(input_policy_list: list, standard_policy_list: list):
     """
     输入待标准化的政策列表input_policy_list，形如：
     [
@@ -133,7 +154,7 @@ if __name__ == "__main__":
                 input_policy_records[idx]['no_match'] = no_match_list[idx]
                 if no_match_list[idx]:
                     print(input_policy_records[idx])
-                fd.write(json.dumps(input_policy_records[idx], ensure_ascii=False) + "\n")
+                fd.write(json.dumps(_json_safe(input_policy_records[idx]), ensure_ascii=False) + "\n")
 
 
 
