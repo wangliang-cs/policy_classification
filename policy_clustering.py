@@ -48,11 +48,11 @@ def policy_standardize_monthly(input_policy_list: list, standard_policy_list: li
     ["标准化政策名称", "标准化政策名称", ..., "标准化政策名称"]
     """
     standard_policy_embed_dir = {}
-    for std_policy_text in standard_policy_list:
+    for std_policy_name in standard_policy_list:
         # std_policy_name = list(std_policy.keys())[0]
         # std_policy_text = list(std_policy.values())[0]
         # std_policy_text = f"{std_policy_name} {std_policy_text}"
-        std_policy_emb = ep_model.embed_text(std_policy_text)
+        std_policy_emb = ep_model.embed_text(std_policy_name)
         standard_policy_embed_dir[std_policy_name] = std_policy_emb
 
     ret_list = []
