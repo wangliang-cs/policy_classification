@@ -134,7 +134,7 @@ def _process_month_chunk(months):
                     standard_policy_list.append(item)
                     standard_policy_type[item] = type
         ret_list, no_match_list = policy_standardize_monthly(input_policy_list, standard_policy_list, local_ep)
-        # print(month_str)
+        print(month_str)
         # print(ret_list)
         with open(f"../policy_classification_data/policy_std/{month_str}_output.json", "w", encoding="utf-8") as fd:
             for idx, std_policy_name in enumerate(ret_list):
