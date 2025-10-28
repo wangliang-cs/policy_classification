@@ -1,5 +1,6 @@
 from llm.llm_embed import EmbedPolicy
 import numpy as np
+import json
 
 ep_model = EmbedPolicy()
 
