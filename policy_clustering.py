@@ -1,4 +1,5 @@
 from llm.llm_embed import EmbedPolicy
+import numpy as np
 
 ep_model = EmbedPolicy()
 
@@ -15,9 +16,15 @@ def _assign_single_policy(policy_text: str, standard_policy_embed_dir) -> str:
     }
     """
     p_emb = ep_model.embed_text(policy_text)
-    for policy_name in standard_policy_embed_dir:
-        # 寻找距离最近的policy，返回其policy_name
-        pass
+    # 使用欧式距离（L2范数）寻找最近的标准化政策
+    min_dist = float('inf')
+    best_name = None
+    for policy_name, std_emb in standard_policy_embed_dir.items():
+        dist = np.linalg.norm(np.array(p_emb) - np.array(std_emb))
+        if dist < min_dist:
+            min_dist = dist
+            best_name = policy_name
+    return best_name
 
 
 def policy_standardize_monthly(input_policy_list: list, standard_policy_list: list) -> list:
@@ -41,15 +48,32 @@ def policy_standardize_monthly(input_policy_list: list, standard_policy_list: li
     """
     standard_policy_embed_dir = {}
     for std_policy in standard_policy_list:
-        std_policy_name = xxx
-        std_policy_text = xxx
+        std_policy_name = list(std_policy.keys())[0]
+        std_policy_text = list(std_policy.values())[0]
+        std_policy_text = f"{std_policy_name} {std_policy_text}"
         std_policy_emb = ep_model.embed_text(std_policy_text)
         standard_policy_embed_dir[std_policy_name] = std_policy_emb
 
     ret_list = []
     for input_policy in input_policy_list:
-        input_policy_text = xxx
+        input_policy_name = list(input_policy.keys())[0]
+        input_policy_text = list(input_policy.values())[0]
+        input_policy_text = f"{input_policy_name} {input_policy_text}"
         std_policy_name = _assign_single_policy(input_policy_text, standard_policy_embed_dir)
         ret_list.append(std_policy_name)
 
     return ret_list
+
+if __name__ == "__main__":
+    input_policy_list = [
+        {"欧盟GPS/Galileo开放信号政策": "欧盟宣布民用Galileo信号免费并鼓励多星座接收，提升民用定位精度；osmdroid后续版本增加对GnssStatus.Callback等多星座接口的封装，使离线定位更准确。"},
+        {"欧盟GDPR生效": "开发者需对地图数据收集做合规审计，部分企业因担心聚合插件可能缓存用户坐标而弃用第三方扩展，Issues中出现银行与医疗客户移除该库的反馈"},
+        {"Google UMP + GDPR 合规框架": "Google要求2021Q2起所有欧洲流量必须使用IAB TCF 2.0合规的UMP表单；AdColony SDK 4.6迅速内置Google UMP适配器并开源TCF String解析，帮助开发者一次集成即可同时满足AdColony+AdMob的GDPR合规，提高SDK采用率。"},
+        {"欧盟GDPR对开源项目合规成本提升": "GDPR要求开源库若收集IP、邮箱需披露数据流向；DKChainableAnimationKit Demo内置Firebase埋点统计崩溃，被欧洲开发者质疑合规，主导者最终移除统计代码并发布无追踪版本，增加维护负担。"}
+    ]
+    standard_policy_list = [
+        {"欧盟GDPR政策": "GDPR要求开源库若收集IP、邮箱、位置等需披露数据流向"},
+        {"Galileo开放信号": "Galileo开放民用卫星信号"},
+    ]
+    ret_list = policy_standardize_monthly(input_policy_list, standard_policy_list)
+    print(ret_list)
