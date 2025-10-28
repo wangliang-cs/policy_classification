@@ -80,6 +80,7 @@ if __name__ == "__main__":
             if not os.path.exists(output_path):
                 month_set.add(month_str)
     month_list = sorted(month_set)
+    print(month_list)
 
     input_policy_list = []
     input_policy_records = []
