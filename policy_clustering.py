@@ -77,7 +77,9 @@ if __name__ == "__main__":
         if m:
             month_str = m
             output_path = os.path.join(base_dir, f"{month_str}_output.json")
-            if not os.path.exists(output_path):
+            input_path = os.path.join(base_dir, f"{month_str}_input.json")
+            events_path = os.path.join(base_dir, f"{month_str}_events.json")            
+            if not os.path.exists(output_path) and os.path.exists(input_path) and os.path.exists(events_path):
                 month_set.add(month_str)
     month_list = sorted(month_set)
     print(month_list)
