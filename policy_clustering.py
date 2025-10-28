@@ -75,7 +75,7 @@ if __name__ == "__main__":
         # 从文件或目录名中提取形如 YYYY_MM 的片段
         m = name.split("_")[0]
         if m:
-            month_str = m.group(1)
+            month_str = m
             output_path = os.path.join(base_dir, f"{month_str}_output.json")
             if not os.path.exists(output_path):
                 month_set.add(month_str)
