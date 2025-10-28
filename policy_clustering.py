@@ -73,7 +73,7 @@ if __name__ == "__main__":
     month_set = set()
     for name in os.listdir(base_dir):
         # 从文件或目录名中提取形如 YYYY_MM 的片段
-        m = re.search(r"\b(\d{4}-\d{2})\b", name)
+        m = name.split("_")[0]
         if m:
             month_str = m.group(1)
             output_path = os.path.join(base_dir, f"{month_str}_output.json")
