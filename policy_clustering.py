@@ -6,27 +6,6 @@ from tqdm import tqdm
 
 ep_model = EmbedPolicy()
 
-# 将可能包含的 NumPy 类型递归转换为原生 Python 类型，避免 JSON 序列化报错
-def _json_safe(obj):
-    import numpy as _np
-    if isinstance(obj, dict):
-        return {k: _json_safe(v) for k, v in obj.items()}
-    if isinstance(obj, list):
-        return [_json_safe(v) for v in obj]
-    if isinstance(obj, tuple):
-        return tuple(_json_safe(v) for v in obj)
-    if isinstance(obj, set):
-        return [_json_safe(v) for v in obj]
-    if isinstance(obj, _np.bool_):
-        return bool(obj)
-    if isinstance(obj, _np.integer):
-        return int(obj)
-    if isinstance(obj, _np.floating):
-        return float(obj)
-    if isinstance(obj, _np.ndarray):
-        return obj.tolist()
-    return obj
-
 
 def _assign_single_policy(policy_text: str, standard_policy_embed_dir):
     """
@@ -52,7 +31,7 @@ def _assign_single_policy(policy_text: str, standard_policy_embed_dir):
             best_name = policy_name
     # 根据距离分布判断是否疑似都不匹配
     if len(dists_list) == 0:
-        no_match = True
+        no_match = 1
     else:
         all_dists = np.array([d for _, d in dists_list])
         sorted_dists = np.sort(all_dists)
@@ -61,7 +40,10 @@ def _assign_single_policy(policy_text: str, standard_policy_embed_dir):
         median = float(np.median(all_dists))
         distinct_top = (second_min - min_dist) / (std + 1e-8)
         relative_to_median = min_dist / (median + 1e-8)
-        no_match = (distinct_top < 0.5) and (relative_to_median > 0.9)
+        if (distinct_top < 0.5) and (relative_to_median > 0.9):
+            no_match = 1
+        else:
+            no_match = 0
     # 可根据 no_match 进一步处理（当前仅计算）
     return best_name, no_match
 
@@ -152,9 +134,9 @@ if __name__ == "__main__":
                 input_policy_records[idx]['std_event'] = std_policy_name
                 input_policy_records[idx]['std_event_type'] = standard_policy_type[std_policy_name]
                 input_policy_records[idx]['no_match'] = no_match_list[idx]
-                if no_match_list[idx]:
+                if no_match_list[idx] > 0:
                     print(input_policy_records[idx])
-                fd.write(json.dumps(_json_safe(input_policy_records[idx]), ensure_ascii=False) + "\n")
+                fd.write(json.dumps(input_policy_records[idx], ensure_ascii=False) + "\n")
 
 
 
