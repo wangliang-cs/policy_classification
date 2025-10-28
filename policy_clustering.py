@@ -2,7 +2,7 @@ from llm.llm_embed import EmbedPolicy
 import numpy as np
 import json
 import os
-import re
+from tqdm import tqdm
 
 ep_model = EmbedPolicy()
 
@@ -86,7 +86,7 @@ if __name__ == "__main__":
 
     input_policy_list = []
     input_policy_records = []
-    for month_str in month_list:
+    for month_str in tqdm(month_list):
         with open(f"../policy_classification_data/policy_std/{month_str}_input.json", "r", encoding="utf-8") as fd:
             for line in fd:
                 line = line.strip()
