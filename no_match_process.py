@@ -21,7 +21,7 @@ def _extract_english(input_text: str):
     return input_text
     
 
-def _ask_for_type(event_name):
+def _ask_for_type(event_name, ori_output_name):
     prompt = f'''
     你是一个移动操作系统开源软件供应链政策和发展战略研究方面的专家。请将这条政策或者事件的类型归类为“政府政策”、“平台举措”、“其它事件”之一。注意：
     1. 政府政策指由国家或地方政府所颁发的政策、法规、标准等；
@@ -35,13 +35,13 @@ def _ask_for_type(event_name):
     for _ in range(3):
         ptype = kimi.KimiClient().chat(prompt)
         if ptype and ptype in policy_types:
-            print(f"                                                  message: qwen OK: {ptype}")
+            print(f"                                                  message: kimi OK: {ptype} : {ori_output_name}")
             return ptype
-    print(f"                                                  warning: qwen none: {ptype}")
+    print(f"                                                  warning: kimi none: {ptype} : {ori_output_name}")
     return None
 
 
-def _rematch(no_match_rec_list, ep_model):
+def _rematch(no_match_rec_list, ep_model, ori_output_name):
     best_match_dict = {}
     best_type_dict = {}
     ret_event_dict = {"政府政策": [], "平台举措": [], "其它事件": []}
@@ -63,7 +63,7 @@ def _rematch(no_match_rec_list, ep_model):
                 print("++++++++++++++++++++++++++++++++++++")
             # en_name = _extract_english(no_match_event)
             rematch_emb[no_match_event] = ep_model.embed_text(no_match_event)
-            policy_type = _ask_for_type(rematch_list[0])
+            policy_type = _ask_for_type(rematch_list[0], ori_output_name)
             if policy_type:
                 ret_event_dict[policy_type].append(no_match_event)
                 best_type_dict[no_match_event] = policy_type
@@ -114,7 +114,7 @@ def _solve_monthly_no_match(ori_output_name, ori_events_name, input_dir, output_
             #     no_match_rec_list.append(rec)
             # else:
             #     output_rect_list.append(rec)
-    best_match_list, ret_event_dict = _rematch(no_match_rec_list, ep_model)
+    best_match_list, ret_event_dict = _rematch(no_match_rec_list, ep_model, ori_output_name)
     for new_match in best_match_list:
         output_rect_list.append(new_match)
 
@@ -171,7 +171,9 @@ if __name__ == "__main__":
         m = name.split("_")[0]
         if m:
             month_str = m
-            month_set.add(month_str)
+            output_rect_file = f"{output_dir}/{month_str}_output.json"
+            if not os.path.exists(output_rect_file):
+                month_set.add(month_str)
     month_list = sorted(month_set)
     # month_list = ["2014-12"]
     print(month_list)
