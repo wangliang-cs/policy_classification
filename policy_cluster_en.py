@@ -72,7 +72,7 @@ def _ask_for_type(event_name, ori_output_name, policy_category):
 
 
 def _ask_for_location(event_name, ori_output_name):
-    prompt = f"针对政府政策：{event_name}，以逗号分割的形式给出该政策发布方的国家, 省, 市信息。严格以逗号分割的字符串形式返回。例如：中国,浙江,杭州"
+    prompt = f"针对政府政策：{event_name}，以逗号分割的形式给出该政策发布方的国家,省,市信息。严格以逗号分割的中文字符串形式返回。例如：中国,浙江,杭州"
     ptype = None
     for _ in range(3):
         ptype = kimi.KimiClient().chat(prompt)
