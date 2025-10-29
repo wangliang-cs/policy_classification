@@ -65,6 +65,9 @@ def _rematch(no_match_rec_list, ep_model):
                 event_content = content_dict[event]
                 best_name, no_match = asp(event_content, rematch_emb, ep_model)
                 if no_match > 0:
+                    print('-----------------------------------')
+                    print(event)
+                    print('-----------------------------------')
                     try_rematch_list.append(event)
                 else:
                     if event not in best_match_dict:
@@ -156,6 +159,7 @@ if __name__ == "__main__":
             month_str = m
             month_set.add(month_str)
     month_list = sorted(month_set)
+    month_list = ["2014-12"]
     print(month_list)
     # 并行处理：将 month_list 切分为 20 个批次，每个批次一个进程，进程内只初始化一次 EmbedPolicy
     max_workers = 20
