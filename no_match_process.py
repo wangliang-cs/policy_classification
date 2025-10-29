@@ -23,8 +23,9 @@ def _ask_for_type(event_name):
     for _ in range(3):
         ptype = gitee.get_qw_content(prompt)
         if ptype and ptype in policy_types:
+            print(f"                                                  message: qwen OK: {ptype}")
             return ptype
-    print(f"warning: qwen none: {ptype}")
+    print(f"                                                  warning: qwen none: {ptype}")
     return None
 
 
