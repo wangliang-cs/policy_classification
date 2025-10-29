@@ -125,6 +125,7 @@ def _rematch_en(no_match_rec_list, ep_model, month_str):
                 else:
                     if event_name not in best_match_dict:
                         best_match_dict[event_name] = best_name
+                    ret_event_dict[best_type_dict[best_name]][best_name] += 1
             rematch_list = try_rematch_list
         else:
             rematch_list = rematch_list[1:]
