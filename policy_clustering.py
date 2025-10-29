@@ -28,7 +28,7 @@ def _json_safe(obj):
 
 
 
-def _assign_single_policy(policy_text: str, standard_policy_embed_dir, ep_model):
+def assign_single_policy(policy_text: str, standard_policy_embed_dir, ep_model):
     """
     policy_text为待标准化的政策文本
 
@@ -39,6 +39,8 @@ def _assign_single_policy(policy_text: str, standard_policy_embed_dir, ep_model)
         ...
     }
     """
+    if policy_text in standard_policy_embed_dir:
+        return policy_text, 0
     p_emb = ep_model.embed_text(policy_text)
     # 使用欧式距离（L2范数）寻找最近的标准化政策
     min_dist = float('inf')
@@ -102,7 +104,7 @@ def policy_standardize_monthly(input_policy_list: list, standard_policy_list: li
         input_policy_name = list(input_policy.keys())[0]
         input_policy_text = list(input_policy.values())[0]
         input_policy_text = f"{input_policy_name} {input_policy_text}"
-        std_policy_name, no_match = _assign_single_policy(input_policy_text, standard_policy_embed_dir, ep_model)
+        std_policy_name, no_match = assign_single_policy(input_policy_text, standard_policy_embed_dir, ep_model)
         ret_list.append(std_policy_name)
         no_match_list.append(no_match)
 
