@@ -11,9 +11,8 @@ policy_types = ["政府政策", "平台举措", "其它事件"]
 
 
 def _extract_english(input_text: str):
-    # 如果input_text中的英文字母超过五个，则仅保留英文部分，删除其余文字，原本连续的英文字母组织为一个单词，不连续的中间用空格分隔
     import re
-    english_pattern = re.compile(r'[a-zA-Z0-9.]+')
+    english_pattern = re.compile(r'[a-zA-Z]{3,}')
     matches = english_pattern.findall(input_text)
     if len(matches) >= 2:
         # print(f"{input_text} ->> {' '.join(matches)}")
