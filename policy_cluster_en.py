@@ -140,17 +140,17 @@ def _rematch_en(no_match_rec_list, ep_model, month_str):
 
 def _solve_monthly_en(input_path, output_path, event_path, ep_model):
     en_rec_list = []
-    with open(input_path, 'r') as fd:
+    with open(input_path, 'r', encoding='utf-8') as fd:
         for line in fd:
             rec = json.loads(line.strip())
             en_rec_list.append(rec)
     output_rect_list, event_map = _rematch_en(en_rec_list, ep_model, input_path.split("/")[-1])
 
-    with open(output_path, 'w') as fd:
+    with open(output_path, 'w', encoding='utf-8') as fd:
         for line in output_rect_list:
             fd.write(json.dumps(line, ensure_ascii=False) + '\n')
 
-    with open(event_path, 'w') as fd:
+    with open(event_path, 'w', encoding='utf-8') as fd:
         fd.write(json.dumps(event_map, ensure_ascii=False, indent=4))
 
 
@@ -187,7 +187,7 @@ if __name__ == "__main__":
     month_list = sorted(month_set)
     month_list = ["2014-12"]
     print(month_list)
-    print(len(month_list))
+    print(f"number of months: {len(month_list)}")
     # 并行处理：将 month_list 切分为 20 个批次，每个批次一个进程，进程内只初始化一次 EmbedPolicy
     max_workers = 40
     n = len(month_list)
