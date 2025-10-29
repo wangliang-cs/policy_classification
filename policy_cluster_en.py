@@ -10,27 +10,41 @@ from policy_clustering import assign_single_policy as asp
 
 policy_types = ["政府政策", "系统平台举措与规定", "其它事件"]
 
-# platform_action_map = {
-#     "工具链与开发环境": "系统平台举措与规定",
-#     "系统功能与API迭代": "系统平台举措与规定",
-#     "开发者资源支持": "系统平台举措与规定", # 这一条也不好说是不是政府
-#     "应用审核与发布限制": "系统平台举措与规定",
-#     "关键功能和服务控制": "系统平台举措与规定",
-#     "官方收录和背书支持三方库/框架": "系统平台举措与规定",
-#     "开发者协议与分成机制": "系统平台举措与规定",
-#     "安全与隐私技术": "系统平台举措与规定"
-# }
-#
-# policy_event_map = {
-#     "数据隐私与权限管理": "外部政策与环境",
-#     "技术标准与认证": "外部政策与环境",
-#     "行业联盟与供应链生态共建": "外部政策与环境",
-#     "司法诉讼与仲裁": "外部政策与环境",
-#     "硬件厂商合作": "外部政策与环境",
-#     "法律和行政政策合规": "外部政策与环境",
-#     "资本运作": "外部政策与环境",
-#     "开源协议与合规": "外部政策与环境"
-# }
+platform_action_map = {
+    "工具链与开发环境": "系统平台举措与规定",
+    "系统功能与API迭代": "系统平台举措与规定",
+    "开发者资源支持": "系统平台举措与规定",  # 这一条也不好说是不是政府
+    "应用审核与发布限制": "系统平台举措与规定",
+    "关键功能和服务控制": "系统平台举措与规定",
+    "官方收录和背书支持三方库/框架": "系统平台举措与规定",
+    "开发者协议与分成机制": "系统平台举措与规定",
+    "安全与隐私技术": "系统平台举措与规定"
+}
+
+policy_event_map = {
+    "数据隐私与权限管理": "外部政策与环境",
+    "技术标准与认证": "外部政策与环境",
+    "行业联盟与供应链生态共建": "外部政策与环境",
+    "司法诉讼与仲裁": "外部政策与环境",
+    "硬件厂商合作": "外部政策与环境",
+    "法律和行政政策合规": "外部政策与环境",
+    "资本运作": "外部政策与环境",
+    "开源协议与合规": "外部政策与环境"
+}
+
+
+def _ask_for_policy_category(event_name, ori_output_name):
+    prompt = (f'你是一个移动操作系统开源软件政策和战略专家，请将政策\"{event_name}\"分类为以下类型中的一个：{list(policy_event_map)}。'
+              f'注意只能选择上述类型中的一个，返回类型对应字符串，不要返回任何其它内容。')
+    ptype = None
+    for _ in range(3):
+        ptype = kimi.KimiClient().chat(prompt)
+        if ptype and ptype in list(policy_event_map):
+            print(f"                                                  message: kimi OK: {ptype} : {ori_output_name}")
+            return ptype
+    print(f"                                                  warning: kimi none: {ptype} : {ori_output_name}")
+    return None
+
 
 
 def _ask_for_type(event_name, ori_output_name, policy_category):
@@ -91,6 +105,7 @@ def _rematch_en(no_match_rec_list, ep_model, month_str):
     ori_rematch_list = []
     std_name_emb_dict = {}
     policy_location_dict = {}
+    policy_category_dict = {}
     for no_match in no_match_rec_list:
         ori_rematch_list.append({"name": no_match["event"], "content": no_match["event_en"],
                                  "policy_category": no_match.get("policy_category", None)})
@@ -114,6 +129,9 @@ def _rematch_en(no_match_rec_list, ep_model, month_str):
             if policy_type == "政府政策":
                 location_str = _ask_for_location(no_match_name, month_str)
                 policy_location_dict[no_match_name] = location_str
+                if policy_category not in list(policy_event_map):
+                    new_policy_category = _ask_for_policy_category(no_match_name, month_str)
+                    policy_category_dict[no_match_name] = new_policy_category
 
             try_rematch_list = []
             for event in rematch_list:
@@ -136,6 +154,10 @@ def _rematch_en(no_match_rec_list, ep_model, month_str):
         rec["std_event_type"] = best_type_dict[rec["std_event"]]
         if rec["std_event"] in policy_location_dict:
             rec["policy_location"] = policy_location_dict[rec["std_event"]]
+        if rec["std_event"] in policy_category_dict:
+            rec["std_policy_category"] = policy_category_dict[rec["std_event"]]
+        else:
+            rec["std_policy_category"] = rec["policy_category"]
         ret_best_match_list.append(rec)
     return ret_best_match_list, ret_event_dict
 
