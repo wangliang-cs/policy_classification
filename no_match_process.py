@@ -47,7 +47,7 @@ def _rematch(no_match_rec_list, ep_model):
     while len(rematch_list) > 0:
         no_match_event = rematch_list[0]
         if no_match_event not in rematch_emb:
-            if no_match_event == "Google开放RecyclerView扩展政策":
+            if no_match_event == "Google开放RecyclerView扩展政策" or True:
                 print("++++++++++++++++++++++++++++++++++++")
                 print(no_match_event)
                 print("++++++++++++++++++++++++++++++++++++")
