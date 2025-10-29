@@ -19,11 +19,12 @@ def _ask_for_type(event_name):
     
     需要分类的事件是：{event_name}
     '''
+    ptype = None
     for _ in range(3):
         ptype = gitee.get_qw_content(prompt)
         if ptype and ptype in policy_types:
             return ptype
-    print("warning: qwen none")
+    print(f"warning: qwen none: {ptype}")
     return None
 
 
