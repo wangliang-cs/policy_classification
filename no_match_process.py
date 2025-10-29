@@ -153,7 +153,7 @@ def _process_month_chunk(months, base_dir, output_dir):
         if not os.path.exists(output_path):
             output_name = f"{month_str}_input.json"
         # event_name = f"{month_str}_events.json"
-        event_name = f"{month_str}_events_disable.json"
+        event_name = f"{month_str}_events_disabled.json"
         _solve_monthly_no_match(output_name, event_name, base_dir, output_dir, local_ep)
         print(f"{month_str} done.")
 
