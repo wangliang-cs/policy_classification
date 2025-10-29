@@ -56,6 +56,7 @@ def assign_single_policy(policy_text: str, standard_policy_embed_dir, ep_model):
         no_match = 1
     else:
         all_dists = np.array([d for _, d in dists_list])
+        print(all_dists)
         sorted_dists = np.sort(all_dists)
         second_min = sorted_dists[1] if len(sorted_dists) > 1 else sorted_dists[0]
         std = all_dists.std()
