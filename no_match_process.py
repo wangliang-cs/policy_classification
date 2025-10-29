@@ -45,7 +45,7 @@ def _rematch(no_match_rec_list, ep_model):
     while len(rematch_list) > 0:
         no_match_event = rematch_list[0]
         if no_match_event not in rematch_emb:
-            if no_match_event == "Google开放RecyclerView扩展政策" or True:
+            if no_match_event == "Google开放RecyclerView扩展政策":
                 print("++++++++++++++++++++++++++++++++++++")
                 print(no_match_event)
                 print("++++++++++++++++++++++++++++++++++++")
@@ -158,7 +158,7 @@ if __name__ == "__main__":
             month_str = m
             month_set.add(month_str)
     month_list = sorted(month_set)
-    month_list = ["2014-12"]
+    # month_list = ["2014-12"]
     print(month_list)
     # 并行处理：将 month_list 切分为 20 个批次，每个批次一个进程，进程内只初始化一次 EmbedPolicy
     max_workers = 20

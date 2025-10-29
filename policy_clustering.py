@@ -38,7 +38,7 @@ def assign_single_policy(policy_text: str, standard_policy_embed_dir, ep_model):
     }
     """
     if policy_text in standard_policy_embed_dir:
-        print(f"!!!!!! direct return: {policy_text}")
+        # print(f"!!!!!! direct return: {policy_text}")
         return policy_text, 0
     p_emb = ep_model.embed_text(policy_text)
     # 使用欧式距离（L2范数）寻找最近的标准化政策
@@ -63,12 +63,12 @@ def assign_single_policy(policy_text: str, standard_policy_embed_dir, ep_model):
         median = float(np.median(all_dists))
         distinct_top = (second_min - min_dist) / (std + 1e-8)
         relative_to_median = min_dist / (median + 1e-8)
-        if ((distinct_top < 0.7) and (relative_to_median > 0.3)) or min_dist > 0.5:
+        if ((distinct_top < 0.7) and (relative_to_median > 0.3)) or min_dist > 0.6:
             no_match = 1
         else:
             no_match = 0
     # 可根据 no_match 进一步处理（当前仅计算）
-    print(f"!!!!!! normal return ({no_match}): {policy_text}: {best_name} : {distinct_top} : {relative_to_median}")
+    # print(f"!!!!!! normal return ({no_match}): {policy_text}: {best_name} : {distinct_top} : {relative_to_median}")
     return best_name, no_match
 
 
