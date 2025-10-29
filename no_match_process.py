@@ -47,6 +47,10 @@ def _rematch(no_match_rec_list, ep_model):
     while len(rematch_list) > 0:
         no_match_event = rematch_list[0]
         if no_match_event not in rematch_emb:
+            if no_match_event == "Google开放RecyclerView扩展政策":
+                print("++++++++++++++++++++++++++++++++++++")
+                print(no_match_event)
+                print("++++++++++++++++++++++++++++++++++++")
             rematch_emb[no_match_event] = ep_model.embed_text(no_match_event)
             policy_type = _ask_for_type(no_match_event)
             if policy_type:
@@ -58,7 +62,6 @@ def _rematch(no_match_rec_list, ep_model):
 
             try_rematch_list = []
             for event in rematch_list:
-
                 event_content = content_dict[event]
                 best_name, no_match = asp(event_content, rematch_emb, ep_model)
                 if no_match > 0:
