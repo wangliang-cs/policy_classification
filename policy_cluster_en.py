@@ -87,7 +87,7 @@ def _ask_for_location(event_name, ori_output_name):
 def _rematch_en(no_match_rec_list, ep_model, month_str):
     best_match_dict = {}
     best_type_dict = {}
-    ret_event_dict = {"政府政策": [], "平台举措": [], "其它事件": []}
+    ret_event_dict = {"政府政策": [], "系统平台举措与规定": [], "其它事件": []}
     ori_rematch_list = []
     std_name_emb_dict = {}
     policy_location_dict = {}
