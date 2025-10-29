@@ -10,6 +10,16 @@ from policy_clustering import assign_single_policy as asp
 policy_types = ["政府政策", "平台举措", "其它事件"]
 
 
+def _extract_english(input_text: str):
+    # 如果input_text中的英文字母超过五个，则仅保留英文部分，删除其余文字，原本连续的英文字母组织为一个单词，不连续的中间用空格分隔
+    import re
+    english_pattern = re.compile(r'[a-zA-Z]+')
+    matches = english_pattern.findall(input_text)
+    if len(matches) > 5:
+        return ' '.join(matches)
+    return input_text
+    
+
 def _ask_for_type(event_name):
     prompt = f'''
     你是一个移动操作系统开源软件供应链政策和发展战略研究方面的专家。请将这条政策或者事件的类型归类为“政府政策”、“平台举措”、“其它事件”之一。注意：
@@ -49,7 +59,8 @@ def _rematch(no_match_rec_list, ep_model):
                 print("++++++++++++++++++++++++++++++++++++")
                 print(no_match_event)
                 print("++++++++++++++++++++++++++++++++++++")
-            rematch_emb[no_match_event] = ep_model.embed_text(no_match_event)
+            
+            rematch_emb[no_match_event] = ep_model.embed_text(_extract_english(no_match_event))
             policy_type = _ask_for_type(no_match_event)
             if policy_type:
                 ret_event_dict[policy_type].append(no_match_event)
@@ -60,7 +71,7 @@ def _rematch(no_match_rec_list, ep_model):
 
             try_rematch_list = []
             for event in rematch_list:
-                best_name, no_match = asp(event, rematch_emb, ep_model)
+                best_name, no_match = asp(_extract_english(event), rematch_emb, ep_model)
                 if no_match > 0:
                     if event == "Google开放RecyclerView扩展政策":
                         print('-----------------------------------')
