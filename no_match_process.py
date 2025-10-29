@@ -112,6 +112,7 @@ def _process_month_chunk(months, base_dir, output_dir):
         output_path = os.path.join(base_dir, f"{month_str}_output.json")
         input_path = os.path.join(base_dir, f"{month_str}_input.json")
         if not os.path.exists(output_path) and not os.path.exists(input_path):
+            print(f"{month_str} continued.")
             continue
         output_name = f"{month_str}_output.json"
         if not os.path.exists(output_path):
