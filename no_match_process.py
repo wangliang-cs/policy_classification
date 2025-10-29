@@ -114,6 +114,7 @@ def _solve_monthly_no_match(ori_output_name, ori_events_name, input_dir, output_
             #     no_match_rec_list.append(rec)
             # else:
             #     output_rect_list.append(rec)
+    ori_output_name = ori_output_name.replace("_input", "_output")
     best_match_list, ret_event_dict = _rematch(no_match_rec_list, ep_model, ori_output_name)
     for new_match in best_match_list:
         output_rect_list.append(new_match)
