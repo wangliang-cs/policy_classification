@@ -71,6 +71,7 @@ def _rematch(no_match_rec_list, ep_model):
 
 def _solve_monthly_no_match(ori_output_name, ori_events_name, input_dir, output_dir, ep_model):
     ori_output_file = f"{input_dir}{ori_output_name}"
+    print(f"solve {ori_output_file}")
     no_match_rec_list = []
     output_rect_list = []
     with open(ori_output_file, 'r') as fd:
