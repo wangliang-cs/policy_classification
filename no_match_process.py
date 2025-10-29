@@ -178,6 +178,7 @@ if __name__ == "__main__":
     month_list = sorted(month_set)
     # month_list = ["2014-12"]
     print(month_list)
+    print(len(month_list))
     # 并行处理：将 month_list 切分为 20 个批次，每个批次一个进程，进程内只初始化一次 EmbedPolicy
     max_workers = 20
     n = len(month_list)
