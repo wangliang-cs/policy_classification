@@ -1,5 +1,6 @@
 import json
 import os
+import traceback
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 from llm.llm_embed import EmbedPolicy
@@ -163,7 +164,10 @@ def _process_month_chunk(months, base_dir, output_dir):
         if not os.path.exists(input_path):
             print(f"{month_str} continued.")
             continue
-        _solve_monthly_en(input_path, output_path, event_path, local_ep)
+        try:
+            _solve_monthly_en(input_path, output_path, event_path, local_ep)
+        except Exception as e:
+            traceback.print_exc()
         print(f"{month_str} done.")
 
 
