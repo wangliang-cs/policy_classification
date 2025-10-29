@@ -16,7 +16,9 @@ def _extract_english(input_text: str):
     english_pattern = re.compile(r'[a-zA-Z]+')
     matches = english_pattern.findall(input_text)
     if len(matches) > 5:
+        print(f"{input_text} ->> {' '.join(matches)}")
         return ' '.join(matches)
+    print(f"{input_text} ->> {input_text}")
     return input_text
     
 
