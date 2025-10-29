@@ -63,7 +63,7 @@ def assign_single_policy(policy_text: str, standard_policy_embed_dir, ep_model):
         median = float(np.median(all_dists))
         distinct_top = (second_min - min_dist) / (std + 1e-8)
         relative_to_median = min_dist / (median + 1e-8)
-        if ((distinct_top < 0.7) and (relative_to_median > 0.3)) or min_dist > 1.0:
+        if ((distinct_top < 0.7) and (relative_to_median > 0.3)) or min_dist > 1.2:
             no_match = 1
         else:
             no_match = 0
