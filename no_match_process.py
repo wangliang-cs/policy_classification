@@ -109,10 +109,11 @@ def _solve_monthly_no_match(ori_output_name, ori_events_name, input_dir, output_
     with open(ori_output_file, 'r') as fd:
         for line in fd:
             rec = json.loads(line.strip())
-            if 'no_match' not in rec or rec['no_match'] > 0:
-                no_match_rec_list.append(rec)
-            else:
-                output_rect_list.append(rec)
+            no_match_rec_list.append(rec)
+            # if 'no_match' not in rec or rec['no_match'] > 0:
+            #     no_match_rec_list.append(rec)
+            # else:
+            #     output_rect_list.append(rec)
     best_match_list, ret_event_dict = _rematch(no_match_rec_list, ep_model)
     for new_match in best_match_list:
         output_rect_list.append(new_match)
