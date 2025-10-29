@@ -10,27 +10,27 @@ from policy_clustering import assign_single_policy as asp
 
 policy_types = ["政府政策", "系统平台举措与规定", "其它事件"]
 
-platform_action_map = {
-    "工具链与开发环境": "系统平台举措与规定",
-    "系统功能与API迭代": "系统平台举措与规定",
-    # "开发者资源支持": "系统平台举措与规定", # 这一条也不好说是不是政府
-    "应用审核与发布限制": "系统平台举措与规定",
-    "关键功能和服务控制": "系统平台举措与规定",
-    "官方收录和背书支持三方库/框架": "系统平台举措与规定",
-    "开发者协议与分成机制": "系统平台举措与规定",
-    "安全与隐私技术": "系统平台举措与规定"
-}
-
-policy_event_map = {
-    "数据隐私与权限管理": "外部政策与环境",
-    "技术标准与认证": "外部政策与环境",
-    "行业联盟与供应链生态共建": "外部政策与环境",
-    "司法诉讼与仲裁": "外部政策与环境",
-    "硬件厂商合作": "外部政策与环境",
-    "法律和行政政策合规": "外部政策与环境",
-    "资本运作": "外部政策与环境",
-    "开源协议与合规": "外部政策与环境"
-}
+# platform_action_map = {
+#     "工具链与开发环境": "系统平台举措与规定",
+#     "系统功能与API迭代": "系统平台举措与规定",
+#     "开发者资源支持": "系统平台举措与规定", # 这一条也不好说是不是政府
+#     "应用审核与发布限制": "系统平台举措与规定",
+#     "关键功能和服务控制": "系统平台举措与规定",
+#     "官方收录和背书支持三方库/框架": "系统平台举措与规定",
+#     "开发者协议与分成机制": "系统平台举措与规定",
+#     "安全与隐私技术": "系统平台举措与规定"
+# }
+#
+# policy_event_map = {
+#     "数据隐私与权限管理": "外部政策与环境",
+#     "技术标准与认证": "外部政策与环境",
+#     "行业联盟与供应链生态共建": "外部政策与环境",
+#     "司法诉讼与仲裁": "外部政策与环境",
+#     "硬件厂商合作": "外部政策与环境",
+#     "法律和行政政策合规": "外部政策与环境",
+#     "资本运作": "外部政策与环境",
+#     "开源协议与合规": "外部政策与环境"
+# }
 
 
 def _ask_for_type(event_name, ori_output_name, policy_category):
@@ -44,24 +44,24 @@ def _ask_for_type(event_name, ori_output_name, policy_category):
     需要分类的事件是：{event_name}
     '''
 
-    prompt2 = f'''
-        你是一个移动操作系统开源软件供应链政策和发展战略研究方面的专家。请将这条政策或者事件的类型归类为“政府政策”、“其它事件”之一。注意：
-        1. "政府政策"指由国家或地方政府所颁发的政策、法规、标准等；
-        2. "其它事件"包括由非政府发起的其它类型的事件和自发形成的新共识等；
-        3. 返回只能是上述2个类型对应的字符串之一，严格以字符串形式返回，不要给出任何其它内容。
-
-        需要分类的事件是：{event_name}
-        '''
-    if policy_category:
-        if policy_category in platform_action_map:
-            return "系统平台举措与规定"
-        elif policy_category in policy_event_map:
-            prompt = prompt2
-        else:
-            prompt = prompt3
-    else:
-        prompt = prompt3
-
+    # prompt2 = f'''
+    #     你是一个移动操作系统开源软件供应链政策和发展战略研究方面的专家。请将这条政策或者事件的类型归类为“政府政策”、“其它事件”之一。注意：
+    #     1. "政府政策"指由国家或地方政府所颁发的政策、法规、标准等；
+    #     2. "其它事件"包括由非政府发起的其它类型的事件和自发形成的新共识等；
+    #     3. 返回只能是上述2个类型对应的字符串之一，严格以字符串形式返回，不要给出任何其它内容。
+    #
+    #     需要分类的事件是：{event_name}
+    #     '''
+    # if policy_category:
+    #     if policy_category in platform_action_map:
+    #         return "系统平台举措与规定"
+    #     elif policy_category in policy_event_map:
+    #         prompt = prompt2
+    #     else:
+    #         prompt = prompt3
+    # else:
+    #     prompt = prompt3
+    prompt = prompt3
     ptype = None
     for _ in range(3):
         ptype = kimi.KimiClient().chat(prompt)
@@ -105,11 +105,11 @@ def _rematch_en(no_match_rec_list, ep_model, month_str):
             std_name_emb_dict[no_match_name] = ep_model.embed_text(no_match_content)
             policy_type = _ask_for_type(no_match_name, month_str, policy_category)
             if policy_type:
-                ret_event_dict[policy_type][no_match_name] = ret_event_dict[policy_type].get(no_match_name, 0) + 1
+                ret_event_dict[policy_type][no_match_name] = ret_event_dict[policy_type].get(no_match_name, 0)
                 best_type_dict[no_match_name] = policy_type
             else:
                 best_type_dict[no_match_name] = "其它事件"
-                ret_event_dict["其它事件"][no_match_name] = ret_event_dict["其它事件"].get(no_match_name, 0) + 1
+                ret_event_dict["其它事件"][no_match_name] = ret_event_dict["其它事件"].get(no_match_name, 0)
 
             if policy_type == "政府政策":
                 location_str = _ask_for_location(no_match_name, month_str)
