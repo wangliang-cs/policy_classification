@@ -36,8 +36,10 @@ def _rematch(no_match_rec_list, ep_model):
     ret_event_dict = {"政府政策": [], "平台举措": [], "其它事件": []}
     ori_rematch_list = []
     rematch_emb = {}
+    content_dict = {}
     for no_match in no_match_rec_list:
-        no_match_event = no_match["event"]
+        no_match_event = f'{no_match["event"]}'
+        content_dict[no_match_event] = f'{no_match_event} {no_match["policy_content"]["政策内容和影响"]}'
         ori_rematch_list.append(no_match_event)
 
     rematch_list = ori_rematch_list
@@ -56,7 +58,8 @@ def _rematch(no_match_rec_list, ep_model):
 
             try_rematch_list = []
             for event in rematch_list:
-                best_name, no_match = asp(event, rematch_emb, ep_model)
+                event_content = content_dict[event]
+                best_name, no_match = asp(event_content, rematch_emb, ep_model)
                 if no_match > 0:
                     try_rematch_list.append(event)
                 else:
