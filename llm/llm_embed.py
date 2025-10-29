@@ -26,13 +26,13 @@ class TextEncoder:
             print("TextEncoder set to use cpu")
             dev_str = "cpu"
         try:
+            self.model = SentenceTransformer(model_str, device=dev_str)
+        except Exception as e:
+            print(f"unable to load model, try local: {config.get_config('model_dir_path')}/{local_path}")
+            print(e)
             self.model = SentenceTransformer(
                 f"{config.get_config('model_dir_path')}/{local_path}",
                 local_files_only=True, device=dev_str)
-        except Exception as e:
-            print(f"unable to load model at: {config.get_config('model_dir_path')}/{local_path}")
-            print(e)
-            self.model = SentenceTransformer(model_str, device=dev_str)
 
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=256,

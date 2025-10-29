@@ -143,9 +143,9 @@ if __name__ == "__main__":
     n = len(month_list)
     if n > 0:
         chunk_size = max(1, (n + max_workers - 1) // max_workers)
-        chunks = [month_list[i:i+chunk_size] for i in range(0, n, chunk_size)]
+        chunks = [month_list[i:i + chunk_size] for i in range(0, n, chunk_size)]
         with ProcessPoolExecutor(max_workers=max_workers) as executor:
             futures = [executor.submit(_process_month_chunk, chunk, base_dir, output_dir) for chunk in chunks]
             for _ in as_completed(futures):
                 pass
-
+    print(f"All done. {len(month_list)} months processed.")
