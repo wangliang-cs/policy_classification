@@ -15,10 +15,10 @@ def _extract_english(input_text: str):
     import re
     english_pattern = re.compile(r'[a-zA-Z]+')
     matches = english_pattern.findall(input_text)
-    if len(matches) > 2:
+    if len(matches) >= 2:
         print(f"{input_text} ->> {' '.join(matches)}")
         return ' '.join(matches)
-    print(f"{input_text} ->> {input_text}")
+    print(f"{input_text} -xx {input_text}")
     return input_text
     
 
