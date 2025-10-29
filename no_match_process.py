@@ -16,9 +16,9 @@ def _extract_english(input_text: str):
     english_pattern = re.compile(r'[a-zA-Z0-9.]+')
     matches = english_pattern.findall(input_text)
     if len(matches) >= 2:
-        print(f"{input_text} ->> {' '.join(matches)}")
+        # print(f"{input_text} ->> {' '.join(matches)}")
         return ' '.join(matches)
-    print(f"{input_text} -xx {input_text}")
+    # print(f"{input_text} -xx {input_text}")
     return input_text
     
 
@@ -174,7 +174,7 @@ if __name__ == "__main__":
             month_str = m
             month_set.add(month_str)
     month_list = sorted(month_set)
-    month_list = ["2014-12"]
+    # month_list = ["2014-12"]
     print(month_list)
     # 并行处理：将 month_list 切分为 20 个批次，每个批次一个进程，进程内只初始化一次 EmbedPolicy
     max_workers = 20
