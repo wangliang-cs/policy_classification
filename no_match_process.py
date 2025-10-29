@@ -70,8 +70,7 @@ def _rematch(no_match_rec_list, ep_model):
 
 
 def _solve_monthly_no_match(ori_output_name, ori_events_name, input_dir, output_dir, ep_model):
-    ori_output_file = f"{input_dir}{ori_output_name}"
-    print(f"solve {ori_output_file}")
+    ori_output_file = f"{input_dir}/{ori_output_name}"
     no_match_rec_list = []
     output_rect_list = []
     with open(ori_output_file, 'r') as fd:
@@ -85,7 +84,7 @@ def _solve_monthly_no_match(ori_output_name, ori_events_name, input_dir, output_
     for new_match in best_match_list:
         output_rect_list.append(new_match)
 
-    ori_events_file = f"{input_dir}{ori_events_name}"
+    ori_events_file = f"{input_dir}/{ori_events_name}"
     if os.path.exists(ori_events_file):
         with open(ori_events_file, 'r') as fd:
             event_map = json.load(fd)
@@ -97,12 +96,12 @@ def _solve_monthly_no_match(ori_output_name, ori_events_name, input_dir, output_
             event_map[ptype] = []
         event_map[ptype].extend(ret_event_dict[ptype])
 
-    output_rect_file = f"{output_dir}{ori_output_name}"
+    output_rect_file = f"{output_dir}/{ori_output_name}"
     with open(output_rect_file, 'w') as fd:
         for line in output_rect_list:
             fd.write(json.dumps(line, ensure_ascii=False) + '\n')
 
-    output_event_file = f"{output_dir}{ori_events_name}"
+    output_event_file = f"{output_dir}/{ori_events_name}"
     with open(output_event_file, 'w') as fd:
         fd.write(json.dumps(event_map, ensure_ascii=False, indent=4))
 
