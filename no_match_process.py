@@ -39,7 +39,7 @@ def _rematch(no_match_rec_list, ep_model):
     content_dict = {}
     for no_match in no_match_rec_list:
         no_match_event = f'{no_match["event"]}'
-        content_dict[no_match_event] = f'{no_match_event} {no_match["policy_content"]["政策内容和影响"]}'
+        content_dict[no_match_event] = f'{no_match_event}'
         ori_rematch_list.append(no_match_event)
 
     rematch_list = ori_rematch_list
