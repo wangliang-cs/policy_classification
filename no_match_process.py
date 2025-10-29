@@ -49,6 +49,7 @@ def _rematch(no_match_rec_list, ep_model):
                 best_type_dict[no_match_event] = policy_type
             else:
                 best_type_dict[no_match_event] = "其它事件"
+                ret_event_dict["其它事件"].append(no_match_event)
 
             try_rematch_list = []
             for event in rematch_list:
