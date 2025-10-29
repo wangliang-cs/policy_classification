@@ -3,7 +3,8 @@ import os
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 from llm.llm_embed import EmbedPolicy
-import llm.gitee_api as gitee
+# import llm.gitee_api as gitee
+import llm.kimi_api as kimi
 from policy_clustering import assign_single_policy as asp
 
 policy_types = ["政府政策", "平台举措", "其它事件"]
@@ -21,7 +22,7 @@ def _ask_for_type(event_name):
     '''
     ptype = None
     for _ in range(3):
-        ptype = gitee.get_qw_content(prompt)
+        ptype = kimi.KimiClient().chat(prompt)
         if ptype and ptype in policy_types:
             print(f"                                                  message: qwen OK: {ptype}")
             return ptype
