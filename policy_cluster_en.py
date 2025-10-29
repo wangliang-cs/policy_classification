@@ -71,12 +71,25 @@ def _ask_for_type(event_name, ori_output_name, policy_category):
     return None
 
 
+def _ask_for_location(event_name, ori_output_name):
+    prompt = f"针对政府政策：{event_name}，以逗号分割的形式给出该政策发布方的国家, 省, 市信息。严格以逗号分割的字符串形式返回。例如：中国,浙江,杭州"
+    ptype = None
+    for _ in range(3):
+        ptype = kimi.KimiClient().chat(prompt)
+        if ptype:
+            print(f"                                                  message: kimi OK: {ptype} : {ori_output_name}")
+            return ptype
+    print(f"                                                  warning: kimi none: {ptype} : {ori_output_name}")
+    return None
+
+
 def _rematch_en(no_match_rec_list, ep_model, month_str):
     best_match_dict = {}
     best_type_dict = {}
     ret_event_dict = {"政府政策": [], "平台举措": [], "其它事件": []}
     ori_rematch_list = []
-    rematch_emb = {}
+    std_name_emb_dict = {}
+    policy_location_dict = {}
     for no_match in no_match_rec_list:
         ori_rematch_list.append({"name": no_match["event"], "content": no_match["event_en"],
                                  "policy_category": no_match.get("policy_category", None)})
@@ -87,8 +100,8 @@ def _rematch_en(no_match_rec_list, ep_model, month_str):
         no_match_name = rematch_list[0]["name"]
         no_match_content = rematch_list[0]["content"]
         policy_category = rematch_list[0]["policy_category"]
-        if no_match_name not in rematch_emb:
-            rematch_emb[no_match_name] = ep_model.embed_text(no_match_content)
+        if no_match_name not in std_name_emb_dict:
+            std_name_emb_dict[no_match_name] = ep_model.embed_text(no_match_content)
             policy_type = _ask_for_type(no_match_name, month_str, policy_category)
             if policy_type:
                 ret_event_dict[policy_type].append(no_match_name)
@@ -97,11 +110,15 @@ def _rematch_en(no_match_rec_list, ep_model, month_str):
                 best_type_dict[no_match_name] = "其它事件"
                 ret_event_dict["其它事件"].append(no_match_name)
 
+            if policy_type == "政府政策":
+                location_str = _ask_for_location(no_match_name, month_str)
+                policy_location_dict[no_match_name] = location_str
+
             try_rematch_list = []
             for event in rematch_list:
                 event_name = event["name"]
                 event_content = event["content"]
-                best_name, no_match = asp(event_content, rematch_emb, ep_model)
+                best_name, no_match = asp(event_content, std_name_emb_dict, ep_model)
                 if no_match > 0:
                     try_rematch_list.append(event)
                 else:
@@ -115,6 +132,8 @@ def _rematch_en(no_match_rec_list, ep_model, month_str):
     for rec in no_match_rec_list:
         rec["std_event"] = best_match_dict[rec["event"]]
         rec["std_event_type"] = best_type_dict[rec["std_event"]]
+        if rec["std_event"] in policy_location_dict:
+            rec["policy_location"] = policy_location_dict[rec["std_event"]]
         ret_best_match_list.append(rec)
     return ret_best_match_list, ret_event_dict
 
