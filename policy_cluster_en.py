@@ -13,7 +13,7 @@ policy_types = ["政府政策", "系统平台举措与规定", "其它事件"]
 platform_action_map = {
     "工具链与开发环境": "系统平台举措与规定",
     "系统功能与API迭代": "系统平台举措与规定",
-    "开发者资源支持": "系统平台举措与规定",
+    # "开发者资源支持": "系统平台举措与规定", # 这一条也不好说是不是政府
     "应用审核与发布限制": "系统平台举措与规定",
     "关键功能和服务控制": "系统平台举措与规定",
     "官方收录和背书支持三方库/框架": "系统平台举措与规定",
@@ -87,7 +87,7 @@ def _ask_for_location(event_name, ori_output_name):
 def _rematch_en(no_match_rec_list, ep_model, month_str):
     best_match_dict = {}
     best_type_dict = {}
-    ret_event_dict = {"政府政策": [], "系统平台举措与规定": [], "其它事件": []}
+    ret_event_dict = {"政府政策": {}, "系统平台举措与规定": {}, "其它事件": {}}
     ori_rematch_list = []
     std_name_emb_dict = {}
     policy_location_dict = {}
@@ -105,11 +105,11 @@ def _rematch_en(no_match_rec_list, ep_model, month_str):
             std_name_emb_dict[no_match_name] = ep_model.embed_text(no_match_content)
             policy_type = _ask_for_type(no_match_name, month_str, policy_category)
             if policy_type:
-                ret_event_dict[policy_type].append(no_match_name)
+                ret_event_dict[policy_type][no_match_name] = ret_event_dict[policy_type].get(no_match_name, 0) + 1
                 best_type_dict[no_match_name] = policy_type
             else:
                 best_type_dict[no_match_name] = "其它事件"
-                ret_event_dict["其它事件"].append(no_match_name)
+                ret_event_dict["其它事件"][no_match_name] = ret_event_dict["其它事件"].get(no_match_name, 0) + 1
 
             if policy_type == "政府政策":
                 location_str = _ask_for_location(no_match_name, month_str)
