@@ -13,7 +13,7 @@ policy_types = ["政府政策", "平台举措", "其它事件"]
 def _extract_english(input_text: str):
     # 如果input_text中的英文字母超过五个，则仅保留英文部分，删除其余文字，原本连续的英文字母组织为一个单词，不连续的中间用空格分隔
     import re
-    english_pattern = re.compile(r'[a-zA-Z]+')
+    english_pattern = re.compile(r'[a-zA-Z0-9.]+')
     matches = english_pattern.findall(input_text)
     if len(matches) >= 2:
         print(f"{input_text} ->> {' '.join(matches)}")
@@ -56,14 +56,15 @@ def _rematch(no_match_rec_list, ep_model):
 
     while len(rematch_list) > 0:
         no_match_event = rematch_list[0]
+        no_match_event = _extract_english(no_match_event)
         if no_match_event not in rematch_emb:
             if no_match_event == "Google开放RecyclerView扩展政策":
                 print("++++++++++++++++++++++++++++++++++++")
                 print(no_match_event)
                 print("++++++++++++++++++++++++++++++++++++")
-            
-            rematch_emb[no_match_event] = ep_model.embed_text(_extract_english(no_match_event))
-            policy_type = _ask_for_type(no_match_event)
+            # en_name = _extract_english(no_match_event)
+            rematch_emb[no_match_event] = ep_model.embed_text(no_match_event)
+            policy_type = _ask_for_type(rematch_list[0])
             if policy_type:
                 ret_event_dict[policy_type].append(no_match_event)
                 best_type_dict[no_match_event] = policy_type
