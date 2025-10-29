@@ -8,13 +8,13 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 def _json_safe(obj):
     import numpy as np
     if isinstance(obj, dict):
-        return { _json_safe(k): _json_safe(v) for k, v in obj.items() }
+        return {_json_safe(k): _json_safe(v) for k, v in obj.items()}
     if isinstance(obj, list):
-        return [ _json_safe(x) for x in obj ]
+        return [_json_safe(x) for x in obj]
     if isinstance(obj, tuple):
         return tuple(_json_safe(x) for x in obj)
     if isinstance(obj, set):
-        return [ _json_safe(x) for x in obj ]
+        return [_json_safe(x) for x in obj]
     if isinstance(obj, (np.bool_,)):
         return bool(obj)
     if isinstance(obj, (np.integer,)):
@@ -24,8 +24,6 @@ def _json_safe(obj):
     if isinstance(obj, np.ndarray):
         return _json_safe(obj.tolist())
     return obj
-
-
 
 
 def assign_single_policy(policy_text: str, standard_policy_embed_dir, ep_model):
@@ -69,7 +67,7 @@ def assign_single_policy(policy_text: str, standard_policy_embed_dir, ep_model):
         else:
             no_match = 0
     # 可根据 no_match 进一步处理（当前仅计算）
-    print(f"!!!!!! normal return ({no_match}): {policy_text}: {best_name}")
+    print(f"!!!!!! normal return ({no_match}): {policy_text}: {best_name} : {distinct_top} : {relative_to_median}")
     return best_name, no_match
 
 
@@ -112,6 +110,7 @@ def policy_standardize_monthly(input_policy_list: list, standard_policy_list: li
 
     return ret_list, no_match_list
 
+
 # 线程工作函数：每个线程内部创建独立 EmbedPolicy 实例并处理一个批次
 def _process_month_chunk(months):
     # 每进程仅初始化一次模型
@@ -149,9 +148,11 @@ def _process_month_chunk(months):
                     print(input_policy_records[idx])
                 fd.write(json.dumps(_json_safe(input_policy_records[idx]), ensure_ascii=False) + "\n")
 
+
 if __name__ == "__main__":
     # 枚举 ../policy_classification_data/policy_std/ 目录下所有出现过的年_月字符串
-    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "policy_classification_data", "policy_std"))
+    base_dir = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "policy_classification_data", "policy_std"))
     month_set = set()
     for name in os.listdir(base_dir):
         # 从文件或目录名中提取形如 YYYY_MM 的片段
@@ -160,7 +161,7 @@ if __name__ == "__main__":
             month_str = m
             output_path = os.path.join(base_dir, f"{month_str}_output.json")
             input_path = os.path.join(base_dir, f"{month_str}_input.json")
-            events_path = os.path.join(base_dir, f"{month_str}_events.json")            
+            events_path = os.path.join(base_dir, f"{month_str}_events.json")
             if not os.path.exists(output_path) and os.path.exists(input_path) and os.path.exists(events_path):
                 month_set.add(month_str)
     month_list = sorted(month_set)
@@ -170,7 +171,7 @@ if __name__ == "__main__":
     n = len(month_list)
     if n > 0:
         chunk_size = max(1, (n + max_workers - 1) // max_workers)
-        chunks = [month_list[i:i+chunk_size] for i in range(0, n, chunk_size)]
+        chunks = [month_list[i:i + chunk_size] for i in range(0, n, chunk_size)]
         with ProcessPoolExecutor(max_workers=max_workers) as executor:
             futures = [executor.submit(_process_month_chunk, chunk) for chunk in chunks]
             for _ in as_completed(futures):
