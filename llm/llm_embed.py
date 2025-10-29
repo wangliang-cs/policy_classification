@@ -1,6 +1,7 @@
 '''
 Generate an embedding given a piece of text.
 '''
+import random
 
 import numpy as np
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -80,17 +81,18 @@ class EmbedPolicy:
             print("No GPUs available.")
             return -1
 
-        gpu_memory = []
-        for i in range(num_gpus):
-            handle = pynvml.nvmlDeviceGetHandleByIndex(i)
-            mem_info = pynvml.nvmlDeviceGetMemoryInfo(handle)
-            gpu_memory.append(mem_info.free)  # 剩余显存
-
-        best_gpu = max(range(num_gpus), key=lambda x: gpu_memory[x])
-        print(f"Selected GPU {best_gpu} with {gpu_memory[best_gpu] / 1024 ** 2:.2f} MB free memory.")
-
-        pynvml.nvmlShutdown()
-        return best_gpu
+        # gpu_memory = []
+        # for i in range(num_gpus):
+        #     handle = pynvml.nvmlDeviceGetHandleByIndex(i)
+        #     mem_info = pynvml.nvmlDeviceGetMemoryInfo(handle)
+        #     gpu_memory.append(mem_info.free)  # 剩余显存
+        #
+        # best_gpu = max(range(num_gpus), key=lambda x: gpu_memory[x])
+        # print(f"Selected GPU {best_gpu} with {gpu_memory[best_gpu] / 1024 ** 2:.2f} MB free memory.")
+        #
+        # pynvml.nvmlShutdown()
+        # return best_gpu
+        return random.randint(0, num_gpus - 1)
 
     def embed_text(self, text: str) -> list:
         try:
