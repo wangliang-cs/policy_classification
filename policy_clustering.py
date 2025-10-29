@@ -69,6 +69,7 @@ def assign_single_policy(policy_text: str, standard_policy_embed_dir, ep_model):
         else:
             no_match = 0
     # 可根据 no_match 进一步处理（当前仅计算）
+    print(f"!!!!!! normal return: {policy_text}: {best_name}")
     return best_name, no_match
 
 
