@@ -65,9 +65,10 @@ def _rematch(no_match_rec_list, ep_model):
                 event_content = content_dict[event]
                 best_name, no_match = asp(event_content, rematch_emb, ep_model)
                 if no_match > 0:
-                    print('-----------------------------------')
-                    print(event)
-                    print('-----------------------------------')
+                    if event == "Google开放RecyclerView扩展政策":
+                        print('-----------------------------------')
+                        print(event)
+                        print('-----------------------------------')
                     try_rematch_list.append(event)
                 else:
                     if event not in best_match_dict:
@@ -79,6 +80,7 @@ def _rematch(no_match_rec_list, ep_model):
                     print(no_match)
                     print("============================================")
             rematch_list = try_rematch_list
+            print(rematch_list)
         else:
             rematch_list = rematch_list[1:]
 
