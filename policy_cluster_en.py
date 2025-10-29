@@ -78,16 +78,18 @@ def _rematch_en(no_match_rec_list, ep_model, month_str):
     ori_rematch_list = []
     rematch_emb = {}
     for no_match in no_match_rec_list:
-        ori_rematch_list.append({"name": no_match["event"], "content": no_match["event_en"]})
+        ori_rematch_list.append({"name": no_match["event"], "content": no_match["event_en"],
+                                 "policy_category": no_match.get("policy_category", None)})
 
     rematch_list = ori_rematch_list
 
     while len(rematch_list) > 0:
         no_match_name = rematch_list[0]["name"]
         no_match_content = rematch_list[0]["content"]
+        policy_category = rematch_list[0]["policy_category"]
         if no_match_name not in rematch_emb:
             rematch_emb[no_match_name] = ep_model.embed_text(no_match_content)
-            policy_type = _ask_for_type(no_match_name, month_str)
+            policy_type = _ask_for_type(no_match_name, month_str, policy_category)
             if policy_type:
                 ret_event_dict[policy_type].append(no_match_name)
                 best_type_dict[no_match_name] = policy_type
@@ -164,7 +166,7 @@ if __name__ == "__main__":
             if not os.path.exists(output_rect_file):
                 month_set.add(month_str)
     month_list = sorted(month_set)
-    # month_list = ["2014-12"]
+    month_list = ["2014-12"]
     print(month_list)
     print(len(month_list))
     # 并行处理：将 month_list 切分为 20 个批次，每个批次一个进程，进程内只初始化一次 EmbedPolicy
