@@ -34,7 +34,7 @@ policy_event_map = {
 
 
 def _ask_for_policy_category(event_name, ori_output_name):
-    prompt = (f'你是一个移动操作系统开源软件政策和战略专家，请将政策\"{event_name}\"分类为以下类型中的一个：{list(policy_event_map)}。'
+    prompt = (f'你是一个移动操作系统开源软件政策和战略专家，请将政策"{event_name}"分类为以下类型中的一个：{list(policy_event_map)}。'
               f'注意只能选择上述类型中的一个，返回类型对应字符串，不要返回任何其它内容。')
     ptype = None
     for _ in range(3):
@@ -157,7 +157,84 @@ def _rematch_en(no_match_rec_list, ep_model, month_str):
         if rec["std_event"] in policy_category_dict:
             rec["std_policy_category"] = policy_category_dict[rec["std_event"]]
         else:
-            rec["std_policy_category"] = rec["policy_category"]
+            rec["std_policy_category"] = rec.get("policy_category", "")
+        ret_best_match_list.append(rec)
+    return ret_best_match_list, ret_event_dict
+
+
+# 并行版本：参考 _rematch_en，将事件匹配阶段改为多线程
+# 说明：保持逐个“锚点”事件（no_match_name）推进的流程，只将针对当前锚点的
+#      rematch_list 遍历中的匹配计算并行化，保证行为与串行版本一致。
+def _rematch_en_parallel(no_match_rec_list, ep_model, month_str, max_workers: int = 16):
+    best_match_dict = {}
+    best_type_dict = {}
+    ret_event_dict = {"政府政策": {}, "系统平台举措与规定": {}, "其它事件": {}}
+    ori_rematch_list = []
+    std_name_emb_dict = {}
+    policy_location_dict = {}
+    policy_category_dict = {}
+    for no_match in no_match_rec_list:
+        ori_rematch_list.append({"name": no_match["event"], "content": no_match["event_en"],
+                                 "policy_category": no_match.get("policy_category", None)})
+
+    rematch_list = ori_rematch_list
+
+    while len(rematch_list) > 0:
+        no_match_name = rematch_list[0]["name"]
+        no_match_content = rematch_list[0]["content"]
+        policy_category = rematch_list[0]["policy_category"]
+        if no_match_name not in std_name_emb_dict:
+            # 为当前锚点计算嵌入与类型
+            std_name_emb_dict[no_match_name] = ep_model.embed_text(no_match_content)
+            policy_type = _ask_for_type(no_match_name, month_str, policy_category)
+            if policy_type:
+                ret_event_dict[policy_type][no_match_name] = ret_event_dict[policy_type].get(no_match_name, 0)
+                best_type_dict[no_match_name] = policy_type
+            else:
+                best_type_dict[no_match_name] = "其它事件"
+                ret_event_dict["其它事件"][no_match_name] = ret_event_dict["其它事件"].get(no_match_name, 0)
+
+            # 政府政策补充定位与细类
+            if policy_type == "政府政策":
+                location_str = _ask_for_location(no_match_name, month_str)
+                policy_location_dict[no_match_name] = location_str
+                if not policy_category or policy_category not in list(policy_event_map):
+                    new_policy_category = _ask_for_policy_category(no_match_name, month_str)
+                    policy_category_dict[no_match_name] = new_policy_category
+
+            # 并行匹配 rematch_list 中的所有事件到已知锚点集合（std_name_emb_dict）
+            try_rematch_list = []
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                future_to_event = {executor.submit(asp, event["content"], std_name_emb_dict, ep_model): event
+                                   for event in rematch_list}
+                for future in as_completed(future_to_event):
+                    event = future_to_event[future]
+                    event_name = event["name"]
+                    try:
+                        best_name, no_match = future.result()
+                    except Exception:
+                        best_name, no_match = no_match_name, 1
+                    if no_match > 0:
+                        try_rematch_list.append(event)
+                    else:
+                        if event_name not in best_match_dict:
+                            best_match_dict[event_name] = best_name
+                        ret_event_dict[best_type_dict[best_name]][best_name] += 1
+            rematch_list = try_rematch_list
+        else:
+            rematch_list = rematch_list[1:]
+
+    # 汇总输出
+    ret_best_match_list = []
+    for rec in no_match_rec_list:
+        rec["std_event"] = best_match_dict[rec["event"]]
+        rec["std_event_type"] = best_type_dict[rec["std_event"]]
+        if rec["std_event"] in policy_location_dict:
+            rec["policy_location"] = policy_location_dict[rec["std_event"]]
+        if rec["std_event"] in policy_category_dict:
+            rec["std_policy_category"] = policy_category_dict[rec["std_event"]]
+        else:
+            rec["std_policy_category"] = rec.get("policy_category", "")
         ret_best_match_list.append(rec)
     return ret_best_match_list, ret_event_dict
 
@@ -168,7 +245,7 @@ def _solve_monthly_en(input_path, output_path, event_path, ep_model):
         for line in fd:
             rec = json.loads(line.strip())
             en_rec_list.append(rec)
-    output_rect_list, event_map = _rematch_en(en_rec_list, ep_model, input_path.split("/")[-1])
+    output_rect_list, event_map = _rematch_en_parallel(en_rec_list, ep_model, input_path.split("/")[-1])
 
     with open(output_path, 'w', encoding='utf-8') as fd:
         for line in output_rect_list:
