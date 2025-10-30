@@ -129,7 +129,7 @@ def _rematch_en(no_match_rec_list, ep_model, month_str):
             if policy_type == "政府政策":
                 location_str = _ask_for_location(no_match_name, month_str)
                 policy_location_dict[no_match_name] = location_str
-                if policy_category not in list(policy_event_map):
+                if not policy_category or policy_category not in list(policy_event_map):
                     new_policy_category = _ask_for_policy_category(no_match_name, month_str)
                     policy_category_dict[no_match_name] = new_policy_category
 
