@@ -1,7 +1,7 @@
 import json
 import os
 import traceback
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor, as_completed, ThreadPoolExecutor
 
 from llm.llm_embed import EmbedPolicy
 # import llm.gitee_api as gitee
