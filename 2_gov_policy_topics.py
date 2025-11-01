@@ -1,5 +1,8 @@
 import json
 import os
+
+from tqdm import tqdm
+
 import llm.kimi_api as kimi
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -7,7 +10,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 #                  "国际合作与标准制定", "人才培养"]
 
 policy_topics = ["技术自主可控与国产化", "软件审核规定", "安全技术要求", "产业生态建设", "开源生态发展", "数据治理与战略"
-                 "市场竞争与反垄断", "个人信息与隐私保护规定", "数据出境安全评估",  "人才培养", "国际合作与标准制定", "应用推广与示范"]
+                                                                                                         "市场竞争与反垄断",
+                 "个人信息与隐私保护规定", "数据出境安全评估", "人才培养", "国际合作与标准制定", "应用推广与示范"]
 
 
 def _assign_topic(std_event_name):
@@ -53,7 +57,8 @@ def execute_gov_policy_topic():
     with open(output_file, "a", encoding="utf-8") as fw:
         # 使用100线程并行为事件分配主题，写入仍串行以保证文件安全
         with ThreadPoolExecutor(max_workers=100) as executor:
-            futures = {executor.submit(_assign_topic, event): event for event in events_set if event not in known_events}
+            futures = {executor.submit(_assign_topic, event): event for event in events_set if
+                       event not in known_events}
             for future in as_completed(futures):
                 event = futures[future]
                 try:
@@ -64,5 +69,35 @@ def execute_gov_policy_topic():
                 fw.write(json.dumps(rec, ensure_ascii=False) + "\n")
                 known_events.add(event)
 
+
+def append_policy_topic():
+    topics_dir = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "policy_classification_data", "policy_topics"))
+    topics_file = f"{topics_dir}/policy_topics.json"
+
+    topics_dict = {}
+    with open(topics_file, "r", encoding="utf-8") as fd:
+        for line in fd:
+            event = json.loads(line)
+            topics_dict[event["std_event"]] = event["topic"]
+
+    base_dir = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "policy_classification_data", "policy_std_en"))
+    for name in tqdm(os.listdir(base_dir)):
+        if "output.json" in name:
+            policy_event_list = []
+            with open(f"{base_dir}/{name}", "r", encoding="utf-8") as fd:
+                for line in fd:
+                    event = json.loads(line)
+                    if event.get("std_event_type", "") == "政府政策":
+                        if event["std_event"] in topics_dict:
+                            event["std_policy_topic"] = topics_dict.get(event["std_event"])
+                    policy_event_list.append(event)
+            with open(f"{base_dir}/{name}", "w", encoding="utf-8") as fd:
+                for evt in policy_event_list:
+                    fd.write(json.dumps(evt, ensure_ascii=False) + '\n')
+
+
 if __name__ == "__main__":
     execute_gov_policy_topic()
+    append_policy_topic()
