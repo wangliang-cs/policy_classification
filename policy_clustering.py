@@ -26,7 +26,7 @@ def _json_safe(obj):
     return obj
 
 
-def assign_single_policy(policy_text: str, standard_policy_embed_dir, ep_model):
+def assign_single_policy(policy_text: str, standard_policy_embed_dir, ep_model, policy_emb = None):
     """
     policy_text为待标准化的政策文本
 
@@ -40,7 +40,10 @@ def assign_single_policy(policy_text: str, standard_policy_embed_dir, ep_model):
     if policy_text in standard_policy_embed_dir:
         # print(f"!!!!!! direct return: {policy_text}")
         return policy_text, 0
-    p_emb = ep_model.embed_text(policy_text)
+    if policy_emb is None:
+        p_emb = ep_model.embed_text(policy_text)
+    else:
+        p_emb = policy_emb
     # 使用欧式距离（L2范数）寻找最近的标准化政策
     min_dist = float('inf')
     best_name = None

@@ -175,7 +175,8 @@ def _rematch_en_parallel(no_match_rec_list, ep_model, month_str, max_workers: in
     policy_category_dict = {}
     for no_match in no_match_rec_list:
         ori_rematch_list.append({"name": no_match["event"], "content": no_match["event_en"],
-                                 "policy_category": no_match.get("policy_category", None)})
+                                 "policy_category": no_match.get("policy_category", None),
+                                 "event_emb": no_match["event_emb"]})
 
     rematch_list = ori_rematch_list
 
@@ -183,9 +184,11 @@ def _rematch_en_parallel(no_match_rec_list, ep_model, month_str, max_workers: in
         no_match_name = rematch_list[0]["name"]
         no_match_content = rematch_list[0]["content"]
         policy_category = rematch_list[0]["policy_category"]
+        event_emb = rematch_list[0]["event_emb"]
         if no_match_name not in std_name_emb_dict:
             # 为当前锚点计算嵌入与类型
-            std_name_emb_dict[no_match_name] = ep_model.embed_text(no_match_content)
+            # std_name_emb_dict[no_match_name] = ep_model.embed_text(no_match_content)
+            std_name_emb_dict[no_match_name] = event_emb
             policy_type = _ask_for_type(no_match_name, month_str, policy_category)
             if policy_type:
                 ret_event_dict[policy_type][no_match_name] = ret_event_dict[policy_type].get(no_match_name, 0)
@@ -205,7 +208,7 @@ def _rematch_en_parallel(no_match_rec_list, ep_model, month_str, max_workers: in
             # 并行匹配 rematch_list 中的所有事件到已知锚点集合（std_name_emb_dict）
             try_rematch_list = []
             with ThreadPoolExecutor(max_workers=max_workers) as executor:
-                future_to_event = {executor.submit(asp, event["content"], std_name_emb_dict, ep_model): event
+                future_to_event = {executor.submit(asp, event["content"], std_name_emb_dict, ep_model, event["event_emb"]): event
                                    for event in rematch_list}
                 for future in as_completed(future_to_event):
                     event = future_to_event[future]
@@ -244,6 +247,8 @@ def _solve_monthly_en(input_path, output_path, event_path, ep_model):
     with open(input_path, 'r', encoding='utf-8') as fd:
         for line in fd:
             rec = json.loads(line.strip())
+            emb = ep_model.embed_text(rec["event_en"])
+            rec["event_emb"] = emb
             en_rec_list.append(rec)
     output_rect_list, event_map = _rematch_en_parallel(en_rec_list, ep_model, input_path.split("/")[-1])
 
