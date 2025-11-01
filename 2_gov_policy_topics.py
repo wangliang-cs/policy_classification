@@ -28,8 +28,9 @@ def execute_gov_policy_topic():
     known_events = set()
     output_dir = os.path.abspath(
         os.path.join(os.path.dirname(__file__), "..", "policy_classification_data", "policy_topics"))
-    if os.path.exists(f"{output_dir}/event_topics.json"):
-        with open(f"{output_dir}/event_topics.json", "r", encoding="utf-8") as fd:
+    output_file = f"{output_dir}/policy_topics.json"
+    if os.path.exists(output_file):
+        with open(output_file, "r", encoding="utf-8") as fd:
             for line in fd:
                 event = json.loads(line)
                 known_events.add(event["std_event"])
@@ -45,7 +46,7 @@ def execute_gov_policy_topic():
                     if event not in known_events:
                         events_set.add(event)
 
-    with open(f"{output_dir}/event_topics.json", "a", encoding="utf-8") as fw:
+    with open(output_file, "a", encoding="utf-8") as fw:
         # 使用100线程并行为事件分配主题，写入仍串行以保证文件安全
         with ThreadPoolExecutor(max_workers=100) as executor:
             futures = {executor.submit(_assign_topic, event): event for event in events_set if event not in known_events}
